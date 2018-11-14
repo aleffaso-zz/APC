@@ -29,11 +29,10 @@ FILE *cadastro_aluno;
 const char *menu_opcoes();
 const char *hashtag();
 const char *realizado_sucesso();
-const char *leitura_arquivo(const char *filename);
 int matricula_comp();
 void maiusculas(char []);
-void ano_correto(char []);
-void matricula_correta(char []);
+int ano_correto(char []);
+int matricula_correta(char []);
 int limpar_buffer();
 
 
@@ -54,8 +53,8 @@ int main(){
 
 	struct cadastro aluno;
 
-	char linguagem[MAX], matricula_cmp[MAX], buffer[45], teste[MAX];
-	int opcao, parar, cont_0, cont_1;
+	char linguagem[MAX], matricula_cmp[MAX], linguagem_cmp[MAX], buffer[45], teste[MAX];
+	int opcao, parar, cont_0, cont_1, cont_2, teste1;
 	
 	parar = 1;
 	
@@ -75,12 +74,49 @@ int main(){
 			case 1: 
 
 				printf("Digite a linguagem: ");
-
 				limpar_buffer();
+
 				scanf("%[^\n]s", linguagem);
 				maiusculas(linguagem);
 
+				strcpy(linguagem_cmp, linguagem);
+
+				cadastro_prog = fopen("linguagens.txt", "r");
+				
+				if(cadastro_prog == NULL){
+
+					printf("\nErro na abertura do arquivo\n");
+					exit(1);
+
+				}
+
+				// Identificar se a linguagem existe no sistema
+
+				while(fscanf(cadastro_prog, " %s", linguagem) != EOF){
+
+
+					if(strcmp(linguagem, linguagem_cmp) == 0){
+							
+						cont_0++;
+
+					}
+
+				}
+
+				if(cont_0 != 0){
+					
+					printf("\nLinguagem já cadastrada no sistema\n");
+					fclose(cadastro_prog);
+					cont_0 = 0;
+					break;
+					
+				}
+
+				fclose(cadastro_prog);
+
 				fflush(stdin);
+
+				strcpy(linguagem, linguagem_cmp);
 
 				cadastro_prog = fopen("linguagens.txt", "ab");
 				
@@ -96,30 +132,45 @@ int main(){
 				fclose(cadastro_prog);
 				
 
-				limpar_tela();
+				//limpar_tela();
 
 				printf("%s", realizado_sucesso());
 
+				fclose(cadastro_prog);
+				cont_0 = 0;
+
 				break;
+
 
 			// Cadastrar aluno
 
 			case 2:
 
-				printf("Digite o nome: ");
-				limpar_buffer();
-
-				scanf("%[^\n]s", aluno.nome);
-				maiusculas(aluno.nome);
-				fflush(stdin);
-
 				printf("Digite a matricula no formato XX/YYYYYYY: ");
 				limpar_buffer();
 
 				scanf("%[^\n]s", aluno.matricula);
-				//matricula_correta(aluno.matricula);
-				fflush(stdin);
+			
+				
+				printf("%d\n", matricula_correta(aluno.matricula));
+				
 
+
+				// Identificar se a matricula digitada é correta
+
+				if(matricula_correta(aluno.matricula) == 0){
+					
+					printf("\nMatricula com ano invalido, favor escrever no formato XX/YYYYYYY com o ano de ingresso válido\n");
+					break;
+
+
+				}else if(matricula_correta(aluno.matricula) == -1){
+
+					printf("\nMatricula invalida, favor escrever no formato XX/YYYYYYY\n");
+					break;
+				}
+
+				// Identificar se a matricula existe no sistema
 
 				strcpy(matricula_cmp, aluno.matricula);
 
@@ -137,28 +188,51 @@ int main(){
 
 					if(strcmp(aluno.matricula,matricula_cmp) == 0){
 							
-						cont_0++;
+						cont_1++;
 
 					}
 
 				}
 
-				if(cont_0 == 1){
+				if(cont_1 == 1){
 
 					printf("\nMatrícula já cadastrada no sistema\n");
 					fclose(cadastro_aluno);
-					cont_0 = 0;
+					cont_1 = 0;
 					break;
 					
 				}
 
-				strcpy(aluno.matricula, matricula_cmp);			
+				strcpy(aluno.matricula, matricula_cmp);	
+
+				fflush(stdin);	
+
+				printf("Digite o nome: ");
+				limpar_buffer();
+
+				scanf("%[^\n]s", aluno.nome);
+				maiusculas(aluno.nome);
+				fflush(stdin);	
 
 				printf("Digite o ano e o semestre no formato aaaa/ss: ");
 				limpar_buffer();
 
 				scanf("%[^\n]s", aluno.ano_semestre);
-				//ano_correto(aluno.ano_semestre);
+
+				// Identificar se o ano digitado está correto
+
+				if(ano_correto(aluno.ano_semestre) == 0){
+					
+					printf("\nAno invalido, favor escrever no formato aaaa/ss\n");
+					break;
+
+
+				}else if(ano_correto(aluno.ano_semestre) == -1){
+
+					printf("\nAno invalido, favor escrever no formato aaaa/ss\n");
+					break;
+				}
+
 				fflush(stdin);
 
 				printf("Digite a linguagem de programação conhecida: ");
@@ -188,14 +262,14 @@ int main(){
 
 					if(strcmp(aluno.aluno_prog,linguagem) == 0){
 							
-						cont_1++;
+						cont_2++;
 
 					}
 
 				}
 
 
-				if(cont_1 == 1){ //Caso o valor do contador seja 1, ele ira cadastrar o aluno no sistema
+				if(cont_2 == 1){ //Caso o valor do contador seja 1, ele ira cadastrar o aluno no sistema
 
 
 					cadastro_aluno = fopen("alunos_cadastro.txt", "ab");
@@ -222,7 +296,7 @@ int main(){
 
 				fclose(cadastro_prog);
 				fclose(cadastro_aluno);
-				cont_1 = 0;
+				cont_2 = 0;
 				
 
 				//limpar_tela();
@@ -246,12 +320,12 @@ int main(){
 
 			case 4:
 
-				printf("Digite um valor: ");
-
+				printf("Digite a linguagem: ");
 				limpar_buffer();
+
 				scanf("%[^\n]s", teste);
-				matricula_correta(teste);
-				
+
+				printf("%d", ano_correto(teste));
 
 				break;
 
@@ -335,44 +409,43 @@ void maiusculas(char m[]){
 
 }
 
-void ano_correto(char ano[]){
+int ano_correto(char ano[]){
 
-	int i, count, tamanho;
-	count = 0;
+	int tamanho, negativo;
 	tamanho = strlen(ano);
 
 	if(strlen(ano) < 7){
 		
-		printf("\nAno invalido, favor escrever no formato aaaa/ss\n");
+		return -1;
 
+	}else if(ano[0] > '2' || ano[4] != '/' || ano[5] != '0' || ano[6] > '2'){
+
+		return 0;
 	}else{
 
-		if(ano[4] != '/' && ano[5] != 0 && (ano[6] != 1 || ano[6] != 0)){
+		return 1;	
 
-			printf("\nAno invalido, favor escrever no formato aaaa/ss\n");
-
-		}
 	}
 
 }
 
-void matricula_correta(char mat[]){
+int matricula_correta(char mat[]){
 
-	int i, count, tamanho;
-	count = 0;
+	int tamanho;
 	tamanho = strlen(mat);
 
 	if(strlen(mat) < 10){
-		
-		printf("\nMatricula invalida, favor escrever no formato XX/YYYYYYY\n");
 
+		return -1;
+
+	}else if(mat[0] < '0' || mat[0] > '1' || mat[2] != '/'){
+
+		return 0;
+		
 	}else{
 
-		if(mat[0] > 1 || mat[2] != '/'){
-
-			printf("\nMatricula com ano invalido, favor escrever no formato XX/YYYYYYY com o ano de ingresso válido\n");
-
-		}
+		return 1;
+	
 	}
 
 }
