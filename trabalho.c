@@ -29,11 +29,20 @@ FILE *cadastro_aluno;
 const char *menu_opcoes();
 const char *hashtag();
 const char *realizado_sucesso();
+const char *conhecimento_linguagem();
+const char *opcao_acrescentar();
 int matricula_comp();
 void maiusculas(char []);
 int ano_correto(char []);
 int matricula_correta(char []);
+int matricula_ano_correto(char [], char []);
 int limpar_buffer();
+int compara_arquivo_prog(FILE *arquivo, char [], char []);
+int compara_arquivo_aluno(FILE *arquivo, char [], char []);
+void salvar_arquivo_prog(FILE *arquivo, char []);
+void salvar_arquivo_aluno(FILE *arquivo, char [], char [], char []);
+void salvar_arquivo_aluno_linguagem(FILE *arquivo, char [], int);
+void salvar_finalArquivo();
 
 
 //Estrutura criada para salvar as informações
@@ -44,6 +53,7 @@ typedef struct cadastro{
 	char matricula[MAX];
 	char ano_semestre[MAX];
 	char aluno_prog[MAX];
+	int  conhecimento;
 
 } cadastro;
 
@@ -53,10 +63,11 @@ int main(){
 
 	struct cadastro aluno;
 
-	char linguagem[MAX], matricula_cmp[MAX], linguagem_cmp[MAX], buffer[45], teste[MAX];
-	int opcao, parar, cont_0, cont_1, cont_2, teste1;
+	char linguagem[MAX], matricula_cmp[MAX], linguagem_cmp[MAX], buffer[45], teste1[MAX];
+	int opcao, parar, teste, n_linguagem, opcao_linguagem;
 	
 	parar = 1;
+	n_linguagem = 1;
 	
 	while(parar!=0){
 
@@ -68,10 +79,7 @@ int main(){
 
 		switch(opcao){
 
-
-			// Cadastrar uma linguagem de progamação
-
-			case 1: 
+			case 1: // Cadastrar uma linguagem de progamação
 
 				printf("Digite a linguagem: ");
 				limpar_buffer();
@@ -81,80 +89,38 @@ int main(){
 
 				strcpy(linguagem_cmp, linguagem);
 
-				cadastro_prog = fopen("linguagens.txt", "r");
 				
-				if(cadastro_prog == NULL){
+				// Comparar linguagem dentro do arquivo				
 
-					printf("\nErro na abertura do arquivo\n");
-					exit(1);
-
-				}
-
-				// Identificar se a linguagem existe no sistema
-
-				while(fscanf(cadastro_prog, " %s", linguagem) != EOF){
-
-
-					if(strcmp(linguagem, linguagem_cmp) == 0){
-							
-						cont_0++;
-
-					}
-
-				}
-
-				if(cont_0 != 0){
+				if(compara_arquivo_prog(cadastro_prog, linguagem, linguagem_cmp) != 0){
 					
 					printf("\nLinguagem já cadastrada no sistema\n");
-					fclose(cadastro_prog);
-					cont_0 = 0;
 					break;
 					
 				}
-
-				fclose(cadastro_prog);
 
 				fflush(stdin);
 
 				strcpy(linguagem, linguagem_cmp);
 
-				cadastro_prog = fopen("linguagens.txt", "ab");
-				
-				if(cadastro_prog == NULL){
+				// Salvar linguagem dentro do arquivo caso não esteja cadastrada
 
-					printf("\nErro na abertura do arquivo\n");
-					exit(1);
-
-				}
-
-				fprintf(cadastro_prog, "%s\n", linguagem);
-				
-				fclose(cadastro_prog);
+				salvar_arquivo_prog(cadastro_prog, linguagem);
 				
 
 				//limpar_tela();
 
 				printf("%s", realizado_sucesso());
 
-				fclose(cadastro_prog);
-				cont_0 = 0;
-
 				break;
 
-
-			// Cadastrar aluno
-
-			case 2:
+			case 2: // Cadastrar aluno
 
 				printf("Digite a matricula no formato XX/YYYYYYY: ");
 				limpar_buffer();
 
 				scanf("%[^\n]s", aluno.matricula);
-			
 				
-				printf("%d\n", matricula_correta(aluno.matricula));
-				
-
 
 				// Identificar se a matricula digitada é correta
 
@@ -174,31 +140,9 @@ int main(){
 
 				strcpy(matricula_cmp, aluno.matricula);
 
-				cadastro_aluno = fopen("alunos_cadastro.txt", "r");
-				
-				if(cadastro_aluno == NULL){
-
-					printf("\nErro na abertura do arquivo\n");
-					exit(1);
-
-				}
-				
-				while(fscanf(cadastro_aluno, " %s", aluno.matricula) != EOF){
-
-
-					if(strcmp(aluno.matricula,matricula_cmp) == 0){
-							
-						cont_1++;
-
-					}
-
-				}
-
-				if(cont_1 == 1){
+				if(compara_arquivo_aluno(cadastro_aluno, aluno.matricula, matricula_cmp) != 0){
 
 					printf("\nMatrícula já cadastrada no sistema\n");
-					fclose(cadastro_aluno);
-					cont_1 = 0;
 					break;
 					
 				}
@@ -235,77 +179,95 @@ int main(){
 
 				fflush(stdin);
 
-				printf("Digite a linguagem de programação conhecida: ");
-				limpar_buffer();
+	
+				// Identificar se o ano e a matricula são correspondente
 
-				scanf("%[^\n]s", aluno.aluno_prog);
-				maiusculas(aluno.aluno_prog);
-				fflush(stdin);
+				if(matricula_ano_correto(aluno.matricula, aluno.ano_semestre) == 0){
 
-
-
-				// Condição para analisar se a linguagem de programação informada existe no sistema
-
-
-				cadastro_prog = fopen("linguagens.txt", "r");
-				
-				if(cadastro_prog == NULL){
-
-					printf("\nErro na abertura do arquivo\n");
-					exit(1);
+					printf("\nMatricula não corresponde com o ano de ingresso\n");
+					break;
 
 				}
+
+				// Salvar as variáveis no arquivo antes de informar as linguagens
+
+
+				salvar_arquivo_aluno(cadastro_aluno, aluno.matricula, aluno.nome, aluno.ano_semestre);
 				
+		
+				// Laço para cadastrar as linguagens que o aluno tem conhecimento
 
-				while(fscanf(cadastro_prog, " %s", linguagem) != EOF){
+				while(n_linguagem != 0){
+
+					printf("\nDigite a linguagem de programação conhecida: ");
+					limpar_buffer();
+
+					scanf("%[^\n]s", aluno.aluno_prog);
+					maiusculas(aluno.aluno_prog);
+
+					strcpy(linguagem_cmp, aluno.aluno_prog);
+			
+					fflush(stdin);
 
 
-					if(strcmp(aluno.aluno_prog,linguagem) == 0){
-							
-						cont_2++;
+					// Condição para analisar se a linguagem de programação informada existe no sistema
+
+					if(compara_arquivo_prog(cadastro_prog, linguagem, linguagem_cmp) == 0){
+
+						printf("\nLinguagem não cadastrada no sistema\n");
+						//Escrever função para excluir o que foi salvo
+						n_linguagem = 0;
+
+					}else{
+
+						printf("Digite o conhecimento do aluno para %s", aluno.aluno_prog);
+						limpar_buffer();
+
+						printf("%s",conhecimento_linguagem());
+						
+						scanf("%d", &aluno.conhecimento);
+			
+						fflush(stdin);
+
+						printf("%s",opcao_acrescentar());
+
+						limpar_buffer();
+
+						scanf("%d", &opcao_linguagem);
+						fflush(stdin);	
+
+						if(opcao_linguagem != 1 ){
+
+							n_linguagem = 0;
+
+						}
+
+						strcpy(aluno.aluno_prog, linguagem_cmp);
+						salvar_arquivo_aluno_linguagem(cadastro_aluno, aluno.aluno_prog, aluno.conhecimento);
 
 					}
 
 				}
 
 
-				if(cont_2 == 1){ //Caso o valor do contador seja 1, ele ira cadastrar o aluno no sistema
-
-
-					cadastro_aluno = fopen("alunos_cadastro.txt", "ab");
-				
-					if(cadastro_aluno == NULL){
-
-						printf("\nErro na abertura do arquivo\n");
-						exit(1);
-
-					}
-
-
-					fprintf(cadastro_aluno, "%s\n%s\n%s\n%s\n", aluno.matricula, aluno.nome, aluno.ano_semestre, aluno.aluno_prog);
-				
-
-					printf("%s", realizado_sucesso());
-
-
-				}else{
-
-					printf("\nLinguagem não cadastrada no sistema\n");
+				if(compara_arquivo_prog(cadastro_prog, linguagem, linguagem_cmp) == 0){
+					
+					n_linguagem = 1;
+					break;
 
 				}
 
-				fclose(cadastro_prog);
-				fclose(cadastro_aluno);
-				cont_2 = 0;
-				
+				salvar_finalArquivo();
+
+				printf("%s", realizado_sucesso());
 
 				//limpar_tela();
+		
+				n_linguagem = 1;
 
 				break;
 
-			// Consultar aluno
-
-			case 3:
+			case 3: // Consultar aluno
 
 								
 				//fseek(cadastro_aluno, 0, SEEK_CUR);
@@ -316,43 +278,39 @@ int main(){
 
 				break;
 
-			// Consultar linguagem
 
-			case 4:
-
+			case 4: // Consultar linguagem
+				
 				printf("Digite a linguagem: ");
 				limpar_buffer();
 
-				scanf("%[^\n]s", teste);
+				scanf("%[^\n]s", linguagem);
 
-				printf("%d", ano_correto(teste));
 
-				break;
-
-			// Gerar relatório de linguagens
-
-			case 5:
+				fflush(stdin);
+				
 
 				break;
 
-			// Excluir um aluno
-
-			case 6:
+			case 5: // Gerar relatório de linguagens
 
 				break;
 
-			// Sair do programa
+			case 6: // Excluir um aluno
 
-			case 7:
+				break;
+
+
+			case 7: // Sair do programa
+
 				limpar_tela();
 
 				printf("\nSaindo do programa ...\n\n");
 				parar = 0;
 				break;
 
-			// Valor errado
+			default: // Valor errado
 
-			default:
 				limpar_tela();
 				printf("\nEscolha um valor válido\n");
 				
@@ -411,7 +369,7 @@ void maiusculas(char m[]){
 
 int ano_correto(char ano[]){
 
-	int tamanho, negativo;
+	int tamanho;
 	tamanho = strlen(ano);
 
 	if(strlen(ano) < 7){
@@ -447,5 +405,159 @@ int matricula_correta(char mat[]){
 		return 1;
 	
 	}
+
+}
+
+int matricula_ano_correto(char matricula[], char ano[]){
+
+
+	if((matricula[0] == ano[2]) && (matricula[1] == ano[3])){
+
+		return 1;
+
+	}else{
+		return 0;
+	
+	}
+
+
+}
+
+int compara_arquivo_prog(FILE *arquivo, char var1[], char var2[]){
+
+	int count = 0;
+
+	arquivo = fopen("linguagens.txt", "r");
+				
+		if(arquivo == NULL){
+
+			exit(1);
+
+		}
+
+
+	while(fscanf(arquivo, " %s", var1) != EOF){
+
+
+		if(strcmp(var1, var2) == 0){
+							
+		count++;
+
+		}
+
+	}
+
+	return count;
+
+	fclose(arquivo);
+
+					
+} 
+
+void salvar_arquivo_prog(FILE *arquivo, char var1[]){
+
+	arquivo = fopen("linguagens.txt", "ab");
+				
+	if(arquivo == NULL){
+
+		exit(1);
+
+	}
+
+	fprintf(arquivo, "%s\n", var1);
+				
+	fclose(arquivo);
+
+}
+
+int compara_arquivo_aluno(FILE *arquivo, char var1[], char var2[]){
+
+	int count = 0;
+
+	arquivo = fopen("alunos_cadastro.txt", "r");
+				
+		if(arquivo == NULL){
+
+			exit(1);
+
+		}
+
+	while(fscanf(arquivo, " %s", var1) != EOF){
+
+
+		if(strcmp(var1, var2) == 0){
+							
+		count++;
+
+		}
+
+	}
+
+	return count;
+
+	fclose(arquivo);
+
+					
+} 
+
+void salvar_arquivo_aluno(FILE *arquivo, char var1[], char var2[], char var3[]){
+
+	arquivo = fopen("alunos_cadastro.txt", "ab");
+				
+	if(arquivo == NULL){
+
+		exit(1);
+
+	}
+
+	fprintf(arquivo, "%s\n%s\n%s\n", var1, var2, var3);
+				
+	fclose(arquivo);
+
+}
+
+void salvar_arquivo_aluno_linguagem(FILE *arquivo, char var1[], int var2){
+
+	arquivo = fopen("alunos_cadastro.txt", "ab");
+				
+	if(arquivo == NULL){
+
+		exit(1);
+
+	}
+
+	fprintf(arquivo, "%s\n%d\n", var1, var2);
+				
+	fclose(arquivo);
+
+}
+
+void salvar_finalArquivo(){
+
+	FILE *arquivo = fopen("alunos_cadastro.txt", "ab");
+				
+	if(arquivo == NULL){
+
+		exit(1);
+
+	}
+
+	fprintf(arquivo, "-----------------------------\n");
+				
+	fclose(arquivo);
+
+}
+
+const char * conhecimento_linguagem(void){
+
+	return "\n1 - Alto\n2 - Médio\n3 - Baixo\nDigite a opção: ";
+
+
+}
+
+const char * opcao_acrescentar(void){
+
+	return "\nDeseja acrescentar uma linguagem para o aluno cadastrado?\n1 - Sim\n2 - Não\nDigite a opção: ";
+
 
 }
