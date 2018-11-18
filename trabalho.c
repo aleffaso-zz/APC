@@ -23,6 +23,7 @@
 
 FILE *cadastro_prog;
 FILE *cadastro_aluno;
+FILE *cadastro_aluno_temp;
 
 // Funções criadas para serem utilizadas durante o programa
 
@@ -31,17 +32,19 @@ const char *hashtag();
 const char *realizado_sucesso();
 const char *conhecimento_linguagem();
 const char *opcao_acrescentar();
-int matricula_comp();
-void maiusculas(char []);
 int ano_correto(char []);
 int matricula_correta(char []);
 int matricula_ano_correto(char [], char []);
 int limpar_buffer();
 int compara_arquivo_prog(FILE *arquivo, char [], char []);
 int compara_arquivo_aluno(FILE *arquivo, char [], char []);
+int matricula_comp();
+int linha_aluno(char []);
+void maiusculas(char []);
 void salvar_arquivo_prog(FILE *arquivo, char []);
 void salvar_arquivo_aluno(FILE *arquivo, char [], char [], char []);
 void salvar_arquivo_aluno_linguagem(FILE *arquivo, char [], int);
+void excluir_aluno(int);
 void salvar_finalArquivo();
 
 
@@ -63,11 +66,16 @@ int main(){
 
 	struct cadastro aluno;
 
-	char linguagem[MAX], matricula_cmp[MAX], linguagem_cmp[MAX], buffer[45], teste1[MAX];
-	int opcao, parar, teste, n_linguagem, opcao_linguagem;
+	char linguagem[MAX], matricula_cmp[MAX], linguagem_cmp[MAX], buffer_teste[MAX], teste1[MAX], teste2[MAX];
+	int opcao, parar, teste, n_linguagem, opcao_linguagem, contador;
+
+	char teste_arq[] = "teste_arquivo.txt";
+	char temp[] = "alunos_cadastro_temporario.txt";
 	
 	parar = 1;
 	n_linguagem = 1;
+	contador = 0;
+	
 	
 	while(parar!=0){
 
@@ -259,9 +267,9 @@ int main(){
 
 				salvar_finalArquivo();
 
-				printf("%s", realizado_sucesso());
+				limpar_tela();
 
-				//limpar_tela();
+				printf("%s", realizado_sucesso());
 		
 				n_linguagem = 1;
 
@@ -269,11 +277,15 @@ int main(){
 
 			case 3: // Consultar aluno
 
-								
-				//fseek(cadastro_aluno, 0, SEEK_CUR);
+				
+				//cadastro_aluno = fopen(teste_arq, "r");
+				
+				//fseek(cadastro_aluno, sizeof(cadastro_aluno), SEEK_END);
 
 				//fread(buffer, sizeof(buffer), 1, cadastro_aluno);
 				//printf("%s\n", buffer);
+
+				//fclose(cadastro_aluno);
 
 
 				break;
@@ -281,13 +293,60 @@ int main(){
 
 			case 4: // Consultar linguagem
 				
-				printf("Digite a linguagem: ");
+				printf("Digite a matricula: ");
 				limpar_buffer();
 
-				scanf("%[^\n]s", linguagem);
+				scanf("%[^\n]s", aluno.matricula);
+
+				cadastro_aluno = fopen("alunos_cadastro.txt", "r");
+				
+					if(cadastro_aluno == NULL){
+
+						exit(1);
+	
+					}
+
+				//contador = linha_aluno(aluno.matricula);
 
 
-				fflush(stdin);
+				strcpy(teste1, "-");
+
+				teste = strlen(buffer_teste);
+
+				while(fscanf(cadastro_aluno, " %s", buffer_teste) != EOF){			
+		
+
+					while(teste > 0){
+							
+						printf("%s\n", buffer_teste);
+						
+
+						if(strcmp(teste1, buffer_teste) != 0){
+	
+							contador++;						
+
+						}
+						teste--;
+
+					}
+
+
+					//if(strcmp(teste1, buffer_teste) == 0){
+
+						//contador++;
+
+					//}
+
+						
+			
+				}
+
+				printf("%d\n", contador);
+
+				contador = 0;
+
+				fclose(cadastro_aluno);
+
 				
 
 				break;
@@ -297,6 +356,44 @@ int main(){
 				break;
 
 			case 6: // Excluir um aluno
+
+				printf("Digite a matricula no formato XX/YYYYYYY para excluir: ");
+				limpar_buffer();
+
+				scanf("%[^\n]s", aluno.matricula);
+				
+
+				// Identificar se a matricula digitada é correta
+
+				if(matricula_correta(aluno.matricula) == 0){
+					
+					printf("\nMatricula com ano invalido, favor escrever no formato XX/YYYYYYY com o ano de ingresso válido\n");
+					break;
+
+
+				}else if(matricula_correta(aluno.matricula) == -1){
+
+					printf("\nMatricula invalida, favor escrever no formato XX/YYYYYYY\n");
+					break;
+				}
+
+				// Identificar se a matricula existe no sistema
+
+				strcpy(matricula_cmp, aluno.matricula);
+
+				if(compara_arquivo_aluno(cadastro_aluno, aluno.matricula, matricula_cmp) != 0){
+
+					excluir_aluno(linha_aluno(matricula_cmp));
+					printf("\nAluno excluido com sucesso\n");
+					
+				}else{
+
+					printf("\nAluno não encontrado no sistema\n");
+			
+				}
+
+				fflush(stdin);
+
 
 				break;
 
@@ -325,7 +422,7 @@ int main(){
 
 const char * menu_opcoes(void){
 	
-	return "\n1) Cadastrar uma linguagem de programação\n2) Cadastrar um aluno\n3) Consultar aluno\n4) Consultar linguagem\n5) Gerar relatório de linguagens\n6) Excluir relatório de linguagens\n7) Sair do programa\n";	
+	return "\n1) Cadastrar uma linguagem de programação\n2) Cadastrar um aluno\n3) Consultar aluno\n4) Consultar linguagem\n5) Gerar relatório de linguagens\n6) Excluir aluno\n7) Sair do programa\n";	
 
 }
 
@@ -542,7 +639,7 @@ void salvar_finalArquivo(){
 
 	}
 
-	fprintf(arquivo, "-----------------------------\n");
+	fprintf(arquivo, "-\n");
 				
 	fclose(arquivo);
 
@@ -558,6 +655,88 @@ const char * conhecimento_linguagem(void){
 const char * opcao_acrescentar(void){
 
 	return "\nDeseja acrescentar uma linguagem para o aluno cadastrado?\n1 - Sim\n2 - Não\nDigite a opção: ";
+
+
+}
+
+void excluir_aluno(int n_linha){
+
+	char temp[] = "alunos_cadastro_temporario.txt";
+	char teste_arq[] = "alunos_cadastro.txt";
+	char buffer[MAX];
+
+	int cont;
+
+	cont = 0;
+
+	cadastro_aluno_temp = fopen(temp, "ab");
+
+	if(cadastro_aluno_temp == NULL){
+
+		fclose(cadastro_aluno_temp);
+		exit(1);
+
+	}
+
+	cadastro_aluno = fopen(teste_arq, "r");
+
+	if(cadastro_aluno == NULL){
+
+		fclose(cadastro_aluno);
+		exit(1);
+
+	}
+
+	while(fscanf(cadastro_aluno, "%s", buffer) != EOF){
+
+
+		cont++;
+
+		if(cont != n_linha){						
+
+			fprintf(cadastro_aluno_temp, "%s\n", buffer);
+
+		}
+
+
+	}
+
+			
+	fclose(cadastro_aluno);
+	fclose(cadastro_aluno_temp);
+
+	remove(teste_arq);
+	rename(temp, teste_arq);
+
+}
+
+int linha_aluno(char matricula[]){
+
+	char teste_arq[] = "alunos_cadastro.txt";
+	char buffer1[MAX];
+	int n;
+
+	n = 0;
+	
+	cadastro_aluno = fopen(teste_arq, "r");
+
+	strcpy(buffer1, "\n");
+
+	while(fscanf(cadastro_aluno, "%s", buffer1) != EOF){
+		
+		n++;
+					
+		if(strcmp(buffer1, matricula) == 0){
+
+			break;
+
+		}
+	}
+
+	fclose(cadastro_aluno);	
+
+
+	return n;
 
 
 }
