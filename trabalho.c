@@ -40,12 +40,13 @@ int compara_arquivo_prog(FILE *arquivo, char [], char []);
 int compara_arquivo_aluno(FILE *arquivo, char [], char []);
 int matricula_comp();
 int linha_aluno(char []);
+int n_linha_informacoes(char []);
 void maiusculas(char []);
 void salvar_arquivo_prog(FILE *arquivo, char []);
 void salvar_arquivo_aluno(FILE *arquivo, char [], char [], char []);
 void salvar_arquivo_aluno_linguagem(FILE *arquivo, char [], int);
 void excluir_aluno(int);
-void salvar_finalArquivo();
+void salvar_finalArquivo(char []);
 
 
 //Estrutura criada para salvar as informações
@@ -67,14 +68,13 @@ int main(){
 	struct cadastro aluno;
 
 	char linguagem[MAX], matricula_cmp[MAX], linguagem_cmp[MAX], buffer_teste[MAX], teste1[MAX], teste2[MAX];
-	int opcao, parar, teste, n_linguagem, opcao_linguagem, contador;
+	int opcao, parar, teste, n_linguagem, opcao_linguagem, linha_exclusao, linha_contagem;
 
 	char teste_arq[] = "teste_arquivo.txt";
 	char temp[] = "alunos_cadastro_temporario.txt";
 	
 	parar = 1;
 	n_linguagem = 1;
-	contador = 0;
 	
 	
 	while(parar!=0){
@@ -265,7 +265,7 @@ int main(){
 
 				}
 
-				salvar_finalArquivo();
+				salvar_finalArquivo(aluno.matricula);
 
 				limpar_tela();
 
@@ -277,77 +277,12 @@ int main(){
 
 			case 3: // Consultar aluno
 
-				
-				//cadastro_aluno = fopen(teste_arq, "r");
-				
-				//fseek(cadastro_aluno, sizeof(cadastro_aluno), SEEK_END);
-
-				//fread(buffer, sizeof(buffer), 1, cadastro_aluno);
-				//printf("%s\n", buffer);
-
-				//fclose(cadastro_aluno);
-
 
 				break;
 
 
 			case 4: // Consultar linguagem
-				
-				printf("Digite a matricula: ");
-				limpar_buffer();
 
-				scanf("%[^\n]s", aluno.matricula);
-
-				cadastro_aluno = fopen("alunos_cadastro.txt", "r");
-				
-					if(cadastro_aluno == NULL){
-
-						exit(1);
-	
-					}
-
-				//contador = linha_aluno(aluno.matricula);
-
-
-				strcpy(teste1, "-");
-
-				teste = strlen(buffer_teste);
-
-				while(fscanf(cadastro_aluno, " %s", buffer_teste) != EOF){			
-		
-
-					while(teste > 0){
-							
-						printf("%s\n", buffer_teste);
-						
-
-						if(strcmp(teste1, buffer_teste) != 0){
-	
-							contador++;						
-
-						}
-						teste--;
-
-					}
-
-
-					//if(strcmp(teste1, buffer_teste) == 0){
-
-						//contador++;
-
-					//}
-
-						
-			
-				}
-
-				printf("%d\n", contador);
-
-				contador = 0;
-
-				fclose(cadastro_aluno);
-
-				
 
 				break;
 
@@ -377,13 +312,26 @@ int main(){
 					break;
 				}
 
-				// Identificar se a matricula existe no sistema
+				
 
 				strcpy(matricula_cmp, aluno.matricula);
 
+				// Identificar se a matricula existe no sistema
+
 				if(compara_arquivo_aluno(cadastro_aluno, aluno.matricula, matricula_cmp) != 0){
 
-					excluir_aluno(linha_aluno(matricula_cmp));
+					
+					linha_exclusao = linha_aluno(matricula_cmp); // Verificar onde o aluno foi cadastrado no arquivo
+
+					linha_contagem = n_linha_informacoes(matricula_cmp); // Fazer contagem das linhas para exclusao
+
+					while(linha_contagem--){
+
+						excluir_aluno(linha_exclusao);
+
+					}
+
+
 					printf("\nAluno excluido com sucesso\n");
 					
 				}else{
@@ -615,6 +563,7 @@ void salvar_arquivo_aluno(FILE *arquivo, char var1[], char var2[], char var3[]){
 
 void salvar_arquivo_aluno_linguagem(FILE *arquivo, char var1[], int var2){
 
+
 	arquivo = fopen("alunos_cadastro.txt", "ab");
 				
 	if(arquivo == NULL){
@@ -629,7 +578,7 @@ void salvar_arquivo_aluno_linguagem(FILE *arquivo, char var1[], int var2){
 
 }
 
-void salvar_finalArquivo(){
+void salvar_finalArquivo(char var[]){
 
 	FILE *arquivo = fopen("alunos_cadastro.txt", "ab");
 				
@@ -639,7 +588,7 @@ void salvar_finalArquivo(){
 
 	}
 
-	fprintf(arquivo, "-\n");
+	fprintf(arquivo, "%s*\n", var);
 				
 	fclose(arquivo);
 
@@ -737,6 +686,23 @@ int linha_aluno(char matricula[]){
 
 
 	return n;
+
+}
+
+int n_linha_informacoes(char matricula[]){
+
+	int cont1, cont2;
+	char teste[MAX];
+
+	cont1 = linha_aluno(matricula);
+
+	strcpy(teste, "*");
+
+	strcat(matricula, teste);
+
+	cont2 = linha_aluno(matricula);
+
+	return (cont2 - cont1) + 1;
 
 
 }
