@@ -22,6 +22,7 @@
 // Arquivos a serem utilizados durante o programa
 
 FILE *cadastro_prog;
+FILE *prog_temp;
 FILE *cadastro_aluno;
 FILE *cadastro_aluno_temp;
 
@@ -54,7 +55,9 @@ void excluir_aluno(int);
 void consultar_aluno(int);
 void salvar_finalArquivo(char []);
 void copia_arquivo();
+void copia_arquivo_linguagem(int );
 void remover_arquivo();
+void arquivo_linguagem_original();
 
 
 //Estrutura criada para salvar as informações
@@ -83,6 +86,7 @@ int main(){
 	char teste_arq[] = "teste_arquivo.txt";
 	char temp[] = "alunos_cadastro_temporario.txt";
 	char teste_arq1[] = "alunos_cadastro1.txt";
+	char teste_arq2[] = "linguagens_copia.txt";
 	
 	parar = 1;
 	n_linguagem = 1;
@@ -383,7 +387,6 @@ int main(){
 
 				void remover_arquivo();
 
-
 				contador = 0;
 
 				contador1 = 0;
@@ -406,7 +409,7 @@ int main(){
 
 				fflush(stdin);
 
-				printf("%s\n", linguagem);
+				// Identifica se a linguagem existe no sistema
 
 				if(compara_arquivo_prog(cadastro_prog, linguagem, linguagem_cmp) == 0){
 					
@@ -423,13 +426,15 @@ int main(){
 					strcpy(medio, linguagem_cmp);
 					strcpy(baixo, linguagem_cmp);
 
+					// O formato do banco foi salvo diferente, desta forma, a linguagem pesquisada é concatenada para ser varrida
+
 					strcat(alto,ling1);
 					strcat(medio,ling2);
 					strcat(baixo,ling3);
 
-
 					tam_ling = quantidade_linguagem_aluno(alto) + quantidade_linguagem_aluno(medio) + quantidade_linguagem_aluno(baixo);
 
+					printf("Quantidade de aluno(s) que sabe(m) %s: %d\n\n", linguagem_cmp, tam_ling);
 					printf("Percentual de alunos com o conhecimento alto: %d%%\n", quantidade_linguagem_aluno(alto)*100/tam_ling);
 					printf("Percentual de alunos com o conhecimento médio: %d%%\n", quantidade_linguagem_aluno(medio)*100/tam_ling);
 					printf("Percentual de alunos com o conhecimento baixo: %d%%\n", quantidade_linguagem_aluno(baixo)*100/tam_ling);
@@ -440,6 +445,56 @@ int main(){
 
 			case 5: // Gerar relatório de linguagens
 
+				copia_arquivo_linguagem(1);
+				copia_arquivo_linguagem(2);
+				copia_arquivo_linguagem(3);
+				
+
+				cadastro_aluno = fopen("alunos_cadastro.txt", "r");
+				
+					if(cadastro_aluno == NULL){
+	
+						exit(1);
+
+					}
+
+				prog_temp = fopen("linguagens_copia.txt", "r");
+				
+					if(prog_temp == NULL){
+	
+						exit(1);
+
+					}
+
+					while(fscanf(cadastro_aluno, " %s", teste1) != EOF){
+
+
+						//printf("%s\n", teste1);
+
+					}
+
+					while(fscanf(prog_temp, " %s", teste2) != EOF){
+
+
+						//printf("%s\n", teste2);
+
+						if(strcmp(teste1, teste2) == 0){
+
+
+							contador++;
+
+						}
+
+					}
+
+					printf("%d\n", contador);	
+					
+					fclose(cadastro_aluno);
+
+					fclose(prog_temp);
+
+				
+				arquivo_linguagem_original();
 
 				break;
 
@@ -1006,10 +1061,6 @@ void copia_arquivo(){
 
 	char buffer[MAX];
 
-	int cont;
-
-	cont = 0;
-
 	FILE *arq_1 = fopen("alunos_cadastro.txt", "r");
 
 	if(arq_1 == NULL){
@@ -1077,3 +1128,75 @@ int quantidade_linguagem_aluno(char linguagem[]){
 	return contador;
 
 }
+
+void copia_arquivo_linguagem(int nivel){
+
+	char buffer[MAX];
+
+	FILE *arq_1 = fopen("linguagens.txt", "r");
+
+	if(arq_1 == NULL){
+
+		fclose(arq_1);
+		exit(1);
+
+	}
+
+	FILE *arq_2 = fopen("linguagens_copia.txt", "ab");
+
+	if(arq_2 == NULL){
+
+		fclose(arq_2);
+		exit(1);
+
+	}
+
+	while(fscanf(arq_1, "%s", buffer) != EOF){					
+
+			fprintf(arq_2, "%s%d\n", buffer, nivel);
+
+
+	}
+			
+	fclose(arq_1);
+	fclose(arq_2);
+
+
+}
+
+
+void arquivo_linguagem_original(){
+
+	char temp[] = "linguagens_copia.txt";
+	char teste_arq[] = "linguagens.txt";
+	char buffer[MAX];
+
+	int cont;
+
+	prog_temp = fopen(temp, "ab");
+
+	if(prog_temp == NULL){
+
+		fclose(prog_temp);
+		exit(1);
+
+	}
+
+	cadastro_prog = fopen(teste_arq, "r");
+
+	if(cadastro_prog == NULL){
+
+		fclose(cadastro_prog);
+		exit(1);
+
+	}
+
+			
+	fclose(prog_temp );
+	fclose(cadastro_prog);
+
+	remove(temp);
+
+
+}
+
